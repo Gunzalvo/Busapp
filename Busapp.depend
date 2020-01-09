@@ -16,9 +16,10 @@
 
 1571523592 c:\users\thehi\onedrive\documentos\programacion\codeblocks\busapp\map.h
 
-1578511815 source:c:\users\thehi\onedrive\documentos\programacion\codeblocks\busapp\main.c
+1578592555 source:c:\users\thehi\onedrive\documentos\programacion\codeblocks\busapp\main.c
 	<stdio.h>
 	<stdlib.h>
+	<ctype.h>
 	"list.h"
 	"Map.h"
 
