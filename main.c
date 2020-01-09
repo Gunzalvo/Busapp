@@ -187,6 +187,8 @@ int main()
     {
         char* input[MAX_CARACTERES];
         Linea* linea;
+        int i;
+
         switch(op)
         {
             case '1':
@@ -196,16 +198,18 @@ int main()
             case '3':
                 scanf("%c", &op);
                 printf("Ingrese el numero de la linea:\n");
-                fgets(input, MAX_CARACTERES, stdin);
+                scanf("%s", &input);
 
                 linea = (Linea*) searchMap(lineas, input);
                 if( linea != NULL )
                 {
                     Parada* parada = list_first(linea->paradas);
+                    i = 1;
                     while( parada )
                     {
-                        printf("%s\n", parada->nombre );
+                        printf("%d. %s\n", i, parada->nombre );
                         parada = (Parada*) list_next(linea->paradas);
+                        i++;
                     }
                 }
                 break;
