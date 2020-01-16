@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 #include "list.h"
 #include "Map.h"
 
@@ -181,6 +182,14 @@ int main()
 
                 mostrarHorariosParada(input_1, paradas);
                 break;
+            case '7':
+                linea = (Linea*) firstMap(lineas);
+                while(linea)
+                {
+                    printf("%d\n", linea->numero);
+                    linea = (Linea*) nextMap(lineas);
+                }
+                break;
             default:
                 printf("Opcion Incorrecta.\n");
         }
@@ -213,6 +222,7 @@ int obtenerLineas(Map* lineas)
                 insertMap(lineas, numero, nueva);
             }
         }
+        fclose(archivo_lineas);
         return 1;
     }
     return 0;
@@ -246,7 +256,14 @@ int obtenerParadas(Map* paradas, Map* lineas)
                 list_push_back(nueva->lineas, existe_linea);
                 insertMap(paradas, nombre, nueva);
             }
+            else if( existe_linea != NULL )
+            {
+                list_push_back(existe_linea->paradas, existe_parada);
+                list_push_back(existe_parada->lineas, existe_linea);
+                insertMap(paradas, nombre, existe_parada);
+            }
         }
+        fclose(archivo_paradas);
         return 1;
     }
     return 0;
@@ -258,7 +275,7 @@ void printTiempo(float unixT)
     int hora = unixT / 3600;
     int minutos = round( (fraccion_hora - hora) * 60 );
 
-    printf("%02d:%02d\n", hora, minutos);
+    printf("%02d:%02d", hora, minutos);
 }
 
 void planificar(char* origen, char* destino, Map* lineas, Map* paradas)
@@ -269,6 +286,8 @@ void planificar(char* origen, char* destino, Map* lineas, Map* paradas)
 void mostrarLineas(char* inputParada, Map* paradas)
 {
     Parada* parada = (Parada*) searchMap(paradas, inputParada);
+
+    printf("\n######## Lineas que se detienen en %s ########\n", parada->nombre);
     if( parada != NULL )
     {
         Linea* linea = (Linea*) list_first(parada->lineas);
@@ -277,12 +296,19 @@ void mostrarLineas(char* inputParada, Map* paradas)
             printf("- %d\n", linea->numero);
             linea =(Linea*) list_next(parada->lineas);
         }
+        printf("\n");
+    }
+    else
+    {
+        printf("No se encontró la parada.\n");
     }
 }
 
 void mostrarParadas(char* inputLinea, Map* lineas)
 {
     Linea* linea = (Linea*) searchMap(lineas, inputLinea);
+
+    printf("\n######## Paradas Linea %d ########\n", linea->numero);
     if( linea != NULL )
     {
         Parada* parada = list_first(linea->paradas);
@@ -293,6 +319,11 @@ void mostrarParadas(char* inputLinea, Map* lineas)
             parada = (Parada*) list_next(linea->paradas);
             i++;
         }
+        printf("\n");
+    }
+    else
+    {
+        printf("No se encontró el número de línea especificado.\n");
     }
 }
 
@@ -304,16 +335,51 @@ void mostrarHorariosLinea(char* inputLinea, Map* lineas)
         Parada* parada = (Parada*) list_first(linea->paradas);
         float actual = (float) linea->hora_inicio;
 
+        printf("\n######## Horarios Linea %d ########\n", linea->numero);
         while( parada )
         {
             printTiempo(actual);
+            printf(" - %s\n", parada->nombre);
             actual += parada->proxima * 60;
             parada = (Parada*) list_next(linea->paradas);
         }
+        printf("\n");
+    }
+    else
+    {
+        printf("No se encontró el número de línea especificado.\n");
     }
 }
 
 void mostrarHorariosParada(char* inputParada, Map* paradas)
 {
+    Parada* parada = (Parada*) searchMap(paradas, inputParada);
+    if(parada != NULL)
+    {
+        Linea* linea = (Linea*) list_first(parada->lineas);
+        printf("\n######## Horarios de Parada %s ########\n", parada->nombre);
+        while( linea )
+        {
+            float tiempo = (float) linea->hora_inicio;
 
+            Parada* linea_p = (Parada*) list_first(linea->paradas);
+            while( linea_p )
+            {
+                if( strcmp(linea_p->nombre, inputParada) == 0 )
+                {
+                    printTiempo(tiempo);
+                    printf(" - %d\n", linea->numero);
+                    break;
+                }
+                tiempo += linea_p->proxima * 60;
+                linea_p = (Parada*) list_next(linea->paradas);
+            }
+            linea = (Linea*) list_next(parada->lineas);
+        }
+        printf("\n");
+    }
+    else
+    {
+        printf("No se encontro la parada.\n");
+    }
 }
