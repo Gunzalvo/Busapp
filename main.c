@@ -10,7 +10,7 @@ typedef struct parada Parada;
 
 struct linea
 {
-    char* hora_inicio;
+    int hora_inicio;
     int numero;
     list* paradas;
 };
@@ -21,6 +21,14 @@ struct parada
     int proxima;
     list* lineas;
 };
+
+int obtenerLineas(Map* lineas);
+int obtenerParadas(Map* paradas, Map* lineas);
+void planificar(char* origen, char* destino, Map* lineas, Map* paradas);
+void mostrarLineas(char* parada, Map* paradas);
+void mostrarParadas(char* linea, Map* lineas);
+void mostrarHorariosLinea(char* linea, Map* lineas);
+void mostrarHorariosParada(char* parada, Map* paradas);
 
 char * _strdup (const char *s) {
     size_t len = strlen (s) + 1;
@@ -42,20 +50,6 @@ const char *get_csv_field (char * tmp, int i) {
         }
     }
     return NULL;
-}
-
-void printmenu()
-{
-    printf("---------------------MENU-----------------\n");
-    printf("------------------------------------------\n");
-    printf("1. Planificar un viaje.\n");
-    printf("2. Mostrar lineas de buses por parada.\n");
-    printf("3. Mostrar paradas de una linea de buses.\n");
-    printf("4. Mostrar horarios de una linea de buses.\n");
-    printf("5. Mostrar horarios de una parada.\n");
-    printf("6. Salir.\n");
-    printf("------------------------------------------\n");
-    printf("Ingrese una opcion:\n");
 }
 
 /* Utilidad para obtener el proximo caracter de la consola */
@@ -89,6 +83,113 @@ int stringEqual(const void * key1, const void * key2) {
     return strcmp(A, B) == 0;
 }
 
+void printmenu()
+{
+    printf("---------------------MENU-----------------\n");
+    printf("------------------------------------------\n");
+    printf("1. Planificar un viaje.\n");
+    printf("2. Mostrar lineas de buses por parada.\n");
+    printf("3. Mostrar paradas de una linea de buses.\n");
+    printf("4. Mostrar horarios de una linea de buses.\n");
+    printf("5. Mostrar horarios de una parada.\n");
+    printf("6. Salir.\n");
+    printf("------------------------------------------\n");
+    printf("Ingrese una opcion:\n");
+}
+
+int main()
+{
+    /* Se definen las variables globales */
+    char op;
+    Map* lineas = createMap(stringHash, stringEqual);
+    Map* paradas = createMap(stringHash, stringEqual);
+
+    /* Se ingresan los datos de las linea y paradas desde los archivos .csv */
+    printf("Cargando base de datos de lineas...\n");
+    if( obtenerLineas(lineas) )
+    {
+        printf("Lineas cargadas con exito.\n");
+    }
+    else
+    {
+        printf("No se pudo cargar las lineas (Archivo lineas.csv no existe).\n");
+        return 1;
+    }
+
+
+    printf("Cargando base de datos de paradas...\n");
+    if( obtenerParadas(paradas, lineas) )
+    {
+        printf("Paradas cargadas con exito.\n");
+    }
+    else
+    {
+        printf("No se pudo cargar las paradas (Archivo paradas.csv no existe).\n");
+        return 1;
+    }
+
+    /* Se muestra el menu principal */
+    printf("Bienvenido a Busapp!\n");
+    printmenu();
+    op = nextchar();
+
+    /* Ciclo principal de la aplicacion */
+    while(op != '6')
+    {
+        char* input_1[MAX_CARACTERES];
+        char* input_2[MAX_CARACTERES];
+        Linea* linea;
+
+        /* Se ejecuta la opcion ingresada */
+        switch(op)
+        {
+            case '1':
+                scanf("%c", &op);
+                printf("Ingrese lugar de partida:\n");
+                scanf("%s", &input_1);
+
+                scanf("%c", &op);
+                printf("Ingrese lugar de destino:\n");
+                scanf("%s", &input_2);
+
+                planificar(input_1, input_2, lineas, paradas);
+                break;
+            case '2':
+                scanf("%c", &op);
+                printf("Ingrese nombre de la parada:\n");
+                scanf("%s", &input_1);
+
+                mostrarLineas(input_1, paradas);
+                break;
+            case '3':
+                scanf("%c", &op);
+                printf("Ingrese el numero de la linea:\n");
+                scanf("%s", &input_1);
+                mostrarParadas(input_1, lineas);
+                break;
+            case '4':
+                scanf("%c", &op);
+                printf("Ingrese el numero de la linea:\n");
+                scanf("%s", &input_1);
+
+                mostrarHorariosLinea(input_1, lineas);
+                break;
+            case '5':
+                scanf("%c", &op);
+                printf("Ingrese nombre de la parada:\n");
+                scanf("%s", &input_1);
+
+                mostrarHorariosParada(input_1, paradas);
+                break;
+            default:
+                printf("Opcion Incorrecta.\n");
+        }
+        printmenu();
+        op = nextchar();
+    }
+    return 0;
+}
+
 int obtenerLineas(Map* lineas)
 {
     FILE* archivo_lineas = fopen("lineas.csv", "r");
@@ -105,7 +206,7 @@ int obtenerLineas(Map* lineas)
             if( existe == NULL )
             {
                 Linea* nueva = (Linea*) malloc( sizeof(Linea) );
-                nueva->hora_inicio = inicio;
+                nueva->hora_inicio = atoi(inicio);
                 nueva->numero = atoi(numero);
                 nueva->paradas = list_create_empty();
 
@@ -140,6 +241,7 @@ int obtenerParadas(Map* paradas, Map* lineas)
                 nueva->proxima = atoi(proxima);
                 nueva->lineas = list_create_empty();
 
+
                 list_push_back(existe_linea->paradas, nueva);
                 list_push_back(nueva->lineas, existe_linea);
                 insertMap(paradas, nombre, nueva);
@@ -150,78 +252,68 @@ int obtenerParadas(Map* paradas, Map* lineas)
     return 0;
 }
 
-int main()
+void printTiempo(float unixT)
 {
-    char op;
-    Map* lineas = createMap(stringHash, stringEqual);
-    Map* paradas = createMap(stringHash, stringEqual);
+    float fraccion_hora = unixT / 3600;
+    int hora = unixT / 3600;
+    int minutos = round( (fraccion_hora - hora) * 60 );
 
-    printf("Cargando base de datos de lineas...\n");
-    if( obtenerLineas(lineas) )
+    printf("%02d:%02d\n", hora, minutos);
+}
+
+void planificar(char* origen, char* destino, Map* lineas, Map* paradas)
+{
+
+}
+
+void mostrarLineas(char* inputParada, Map* paradas)
+{
+    Parada* parada = (Parada*) searchMap(paradas, inputParada);
+    if( parada != NULL )
     {
-        printf("Lineas cargadas con exito.\n");
-    }
-    else
-    {
-        printf("No se pudo cargar las lineas (Archivo lineas.csv no existe).\n");
-        return 1;
-    }
-
-
-    printf("Cargando base de datos de paradas...\n");
-    if( obtenerParadas(paradas, lineas) )
-    {
-        printf("Paradas cargadas con exito.\n");
-    }
-    else
-    {
-        printf("No se pudo cargar las paradas (Archivo paradas.csv no existe).\n");
-        return 1;
-    }
-
-    printf("Bienvenido a Busapp!\n");
-    printmenu();
-    op = nextchar();
-
-    while(op != '6')
-    {
-        char* input[MAX_CARACTERES];
-        Linea* linea;
-        int i;
-
-        switch(op)
+        Linea* linea = (Linea*) list_first(parada->lineas);
+        while( linea )
         {
-            case '1':
-                break;
-            case '2':
-                break;
-            case '3':
-                scanf("%c", &op);
-                printf("Ingrese el numero de la linea:\n");
-                scanf("%s", &input);
-
-                linea = (Linea*) searchMap(lineas, input);
-                if( linea != NULL )
-                {
-                    Parada* parada = list_first(linea->paradas);
-                    i = 1;
-                    while( parada )
-                    {
-                        printf("%d. %s\n", i, parada->nombre );
-                        parada = (Parada*) list_next(linea->paradas);
-                        i++;
-                    }
-                }
-                break;
-            case '4':
-                break;
-            case '5':
-                break;
-            default:
-                printf("Opcion Incorrecta.\n");
+            printf("- %d\n", linea->numero);
+            linea =(Linea*) list_next(parada->lineas);
         }
-        printmenu();
-        op = nextchar();
     }
-    return 0;
+}
+
+void mostrarParadas(char* inputLinea, Map* lineas)
+{
+    Linea* linea = (Linea*) searchMap(lineas, inputLinea);
+    if( linea != NULL )
+    {
+        Parada* parada = list_first(linea->paradas);
+        int i = 1;
+        while( parada )
+        {
+            printf("%d. %s\n", i, parada->nombre );
+            parada = (Parada*) list_next(linea->paradas);
+            i++;
+        }
+    }
+}
+
+void mostrarHorariosLinea(char* inputLinea, Map* lineas)
+{
+    Linea* linea = (Linea*) searchMap(lineas, inputLinea);
+    if( linea != NULL )
+    {
+        Parada* parada = (Parada*) list_first(linea->paradas);
+        float actual = (float) linea->hora_inicio;
+
+        while( parada )
+        {
+            printTiempo(actual);
+            actual += parada->proxima * 60;
+            parada = (Parada*) list_next(linea->paradas);
+        }
+    }
+}
+
+void mostrarHorariosParada(char* inputParada, Map* paradas)
+{
+
 }
