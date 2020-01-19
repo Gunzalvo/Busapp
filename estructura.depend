@@ -1,0 +1,26 @@
+# depslib dependency file v1.0
+1579391492 source:c:\users\felipe tapia\estructura\list.c
+	"list.h"
+	<stdlib.h>
+	<assert.h>
+
+1579391492 c:\users\felipe tapia\estructura\list.h
+
+1579391492 source:c:\users\felipe tapia\estructura\main.c
+	<stdio.h>
+	<stdlib.h>
+	<ctype.h>
+	<string.h>
+	"list.h"
+	"Map.h"
+
+1579391492 c:\users\felipe tapia\estructura\map.h
+
+1579391492 source:c:\users\felipe tapia\estructura\map.c
+	"Map.h"
+	<math.h>
+	<string.h>
+	<stdlib.h>
+	<stdint.h>
+	<assert.h>
+
