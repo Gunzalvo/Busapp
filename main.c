@@ -55,18 +55,6 @@ const char *get_csv_field (char * tmp, int i) {
     return NULL;
 }
 
-/* Utilidad para obtener el proximo caracter de la consola */
-char nextchar()
-{
-    char temp;
-    scanf("%c", &temp);
-    while(iscntrl(temp))
-    {
-        scanf("%c", &temp);
-    }
-    return temp;
-}
-
 long long stringHash(const void * key) {
     long long hash = 5381;
 
