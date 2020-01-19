@@ -147,12 +147,12 @@ int main()
         switch(menuPrincipal()){
             case 1:
                 printf("Ingrese lugar de partida:\n");
-                fgets(input_1, MAX_CARACTERES - 1, stdin);
-                input_1[strlen(input_1) - 1] = '\0';
-                printf("%s", input_1);
+                scanf("%[^\n]s", input_1);
+                getchar();
+
                 printf("Ingrese lugar de destino:\n");
-                fgets(input_2, MAX_CARACTERES - 1, stdin);
-                input_2[strlen(input_2)-1] = '\0';
+                scanf("%[^\n]s", input_2);
+                getchar();
 
                 planificar(input_1, input_2, lineas, paradas);
                 break;

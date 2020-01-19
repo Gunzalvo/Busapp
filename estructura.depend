@@ -6,11 +6,12 @@
 
 1579391492 c:\users\felipe tapia\estructura\list.h
 
-1579391492 source:c:\users\felipe tapia\estructura\main.c
+1579403879 source:c:\users\felipe tapia\estructura\main.c
 	<stdio.h>
 	<stdlib.h>
 	<ctype.h>
 	<string.h>
+	<math.h>
 	"list.h"
 	"Map.h"
 
