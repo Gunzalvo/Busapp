@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include "list.h"
 #include "Map.h"
 
@@ -12,7 +13,7 @@ typedef struct parada Parada;
 
 struct linea
 {
-    int hora_inicio;
+    long hora_inicio;
     int numero;
     list* paradas;
 };
@@ -107,7 +108,6 @@ int menuPrincipal(){
 int main()
 {
     /* Se definen las variables globales */
-    int op;
     Map* lineas = createMap(stringHash, stringEqual);
     Map* paradas = createMap(stringHash, stringEqual);
 
@@ -137,14 +137,16 @@ int main()
 
     /* Se muestra el menu principal */
     printf("Bienvenido a Busapp!\n");
+
     /* Ciclo principal de la aplicacion */
-    while(1){
+    while(1)
+    {
         char* input_1[MAX_CARACTERES];
         char* input_2[MAX_CARACTERES];
-        Linea* linea;
 
         /* Se ejecuta la opcion ingresada */
-        switch(menuPrincipal()){
+        switch( menuPrincipal() )
+        {
             case 1:
                 printf("Ingrese lugar de partida:\n");
                 scanf("%[^\n]s", input_1);
@@ -158,7 +160,8 @@ int main()
                 break;
             case 2:
                 printf("Ingrese nombre de la parada:\n");
-                scanf("%s", &input_1);
+                scanf("%[^\n]s", input_1);
+                getchar();
 
                 mostrarLineas(input_1, paradas);
                 break;
@@ -175,26 +178,18 @@ int main()
                 break;
             case 5:
                 printf("Ingrese nombre de la parada:\n");
-                scanf("%s", &input_1);
+                scanf("%[^\n]s", input_1);
+                getchar();
 
                 mostrarHorariosParada(input_1, paradas);
                 break;
             case 6:
-                return;
-                break;
-            case 7:
-                linea = (Linea*) firstMap(lineas);
-                while(linea)
-                {
-                    printf("%d\n", linea->numero);
-                    linea = (Linea*) nextMap(lineas);
-                }
+                return 0;
                 break;
             default:
                 printf("Opcion Incorrecta.\n");
         }
     }
-    return 0;
 }
 
 int obtenerLineas(Map* lineas)
@@ -316,9 +311,9 @@ void mostrarLineas(char* inputParada, Map* paradas)
 {
     Parada* parada = (Parada*) searchMap(paradas, inputParada);
 
-    printf("\n######## Lineas que se detienen en %s ########\n", parada->nombre);
     if( parada != NULL )
     {
+        printf("\n######## Lineas que se detienen en %s ########\n", parada->nombre);
         Linea* linea = (Linea*) list_first(parada->lineas);
         while( linea )
         {
@@ -329,7 +324,7 @@ void mostrarLineas(char* inputParada, Map* paradas)
     }
     else
     {
-        printf("No se encontró la parada.\n");
+        printf("No se encontro la parada.\n");
     }
 }
 
@@ -337,9 +332,9 @@ void mostrarParadas(char* inputLinea, Map* lineas)
 {
     Linea* linea = (Linea*) searchMap(lineas, inputLinea);
 
-    printf("\n######## Paradas Linea %d ########\n", linea->numero);
     if( linea != NULL )
     {
+        printf("\n######## Paradas Linea %d ########\n", linea->numero);
         Parada* parada = list_first(linea->paradas);
         int i = 1;
         while( parada )
@@ -352,7 +347,7 @@ void mostrarParadas(char* inputLinea, Map* lineas)
     }
     else
     {
-        printf("No se encontró el número de línea especificado.\n");
+        printf("No se encontro el numero de linea especificado.\n");
     }
 }
 
@@ -361,22 +356,62 @@ void mostrarHorariosLinea(char* inputLinea, Map* lineas)
     Linea* linea = (Linea*) searchMap(lineas, inputLinea);
     if( linea != NULL )
     {
-        Parada* parada = (Parada*) list_first(linea->paradas);
-        float actual = (float) linea->hora_inicio;
+        time_t t = time(NULL);
+        struct tm tm = *localtime(&t);
 
+        long tiempo = linea->hora_inicio;
+        long actual = tm.tm_hour * 3600 + tm.tm_min * 60 + tm.tm_sec;
+
+        /*
+            Para contextualizar los horarios respecto a la hora en la que
+            el usuario está preguntando, suponemos que el usuario está
+            a un poco menos de la mitad del recorrido.
+        */
+        long t_hasta_mitad = 0;
+        int mitad_viaje = list_size(linea->paradas) * 0.2;
+
+        Parada* parada = (Parada*) list_first(linea->paradas);
+        for (int i = 0; i < mitad_viaje; i++)
+        {
+            t_hasta_mitad += parada->proxima * 60;
+            parada = (Parada*) list_next(linea->paradas);
+        }
+
+        /*
+           Si el usuario pregunta por los horarios antes del inicio
+           del servicio del bus, solo mostramos los horarios desde cuando parten.
+        */
+        if( (actual - t_hasta_mitad) > tiempo )
+        {
+            /*
+               Desfase entre la salida del bus y el tiempo de partida ideal
+               (tiempo en el que el bus llegaria justo a la hora actual).
+               La frecuencia de salida de los buses es 15 min, osea 900 seg.
+            */
+            long desfase = actual - t_hasta_mitad - tiempo;
+            while( desfase <= -900 || desfase > 0)
+            {
+                tiempo += 900;
+                desfase = actual - t_hasta_mitad - tiempo;
+            }
+        }
+
+        parada = (Parada*) list_first(linea->paradas);
         printf("\n######## Horarios Linea %d ########\n", linea->numero);
         while( parada )
         {
-            printTiempo(actual);
+            printTiempo(tiempo);
             printf(" - %s\n", parada->nombre);
-            actual += parada->proxima * 60;
+            tiempo += parada->proxima * 60;
+            if( tiempo >= 86400 )
+                tiempo -= 86400;
             parada = (Parada*) list_next(linea->paradas);
         }
         printf("\n");
     }
     else
     {
-        printf("No se encontró el número de línea especificado.\n");
+        printf("No se encontro el numero de linea especificado.\n");
     }
 }
 
@@ -389,20 +424,47 @@ void mostrarHorariosParada(char* inputParada, Map* paradas)
         printf("\n######## Horarios de Parada %s ########\n", parada->nombre);
         while( linea )
         {
-            float tiempo = (float) linea->hora_inicio;
+            time_t t = time(NULL);
+            struct tm tm = *localtime(&t);
 
-            Parada* linea_p = (Parada*) list_first(linea->paradas);
-            while( linea_p )
+            long tiempo_inicio = linea->hora_inicio;
+            long actual = tm.tm_hour * 3600 + tm.tm_min * 60 + tm.tm_sec;
+
+            long tiempo_hasta_parada = 0;
+
+            /*
+                Calculamos el tiempo que se demora el bus en llegar hasta
+                la parada desde el terminal.
+            */
+            Parada* parada_linea = (Parada*) list_first(linea->paradas);
+            while( parada_linea )
             {
-                if( strcmp(linea_p->nombre, inputParada) == 0 )
-                {
-                    printTiempo(tiempo);
-                    printf(" - %d\n", linea->numero);
+                if( strcmp(parada_linea->nombre, inputParada) == 0 )
                     break;
-                }
-                tiempo += linea_p->proxima * 60;
-                linea_p = (Parada*) list_next(linea->paradas);
+
+                tiempo_hasta_parada += parada_linea->proxima * 60;
+                parada_linea = (Parada*) list_next(linea->paradas);
             }
+
+            if( (actual - tiempo_hasta_parada) > tiempo_inicio )
+            {
+                /*
+                    Un desfase negativo significa que el bus llegara en
+                    el futuro (no podemos retroceder el tiempo para tomar
+                    el bus anterior xd).
+                */
+                long desfase = actual - tiempo_hasta_parada - tiempo_inicio;
+                while( desfase <= -900 || desfase > 0)
+                {
+                    // Movemos el tiempo de inicio del bus
+                    tiempo_inicio += 900;
+                    desfase = actual - tiempo_hasta_parada - tiempo_inicio;
+                }
+            }
+
+            printTiempo((float) (tiempo_inicio + tiempo_hasta_parada));
+            printf(" - %d\n", linea->numero);
+
             linea = (Linea*) list_next(parada->lineas);
         }
         printf("\n");
