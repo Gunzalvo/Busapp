@@ -157,27 +157,23 @@ int main()
                 planificar(input_1, input_2, lineas, paradas);
                 break;
             case 2:
-                scanf("%c", &op);
                 printf("Ingrese nombre de la parada:\n");
                 scanf("%s", &input_1);
 
                 mostrarLineas(input_1, paradas);
                 break;
             case 3:
-                scanf("%c", &op);
                 printf("Ingrese el numero de la linea:\n");
                 scanf("%s", &input_1);
                 mostrarParadas(input_1, lineas);
                 break;
             case 4:
-                scanf("%c", &op);
                 printf("Ingrese el numero de la linea:\n");
                 scanf("%s", &input_1);
 
                 mostrarHorariosLinea(input_1, lineas);
                 break;
             case 5:
-                scanf("%c", &op);
                 printf("Ingrese nombre de la parada:\n");
                 scanf("%s", &input_1);
 
