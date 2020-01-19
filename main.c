@@ -85,24 +85,29 @@ int stringEqual(const void * key1, const void * key2) {
     return strcmp(A, B) == 0;
 }
 
-void printmenu()
-{
-    printf("---------------------MENU-----------------\n");
-    printf("------------------------------------------\n");
-    printf("1. Planificar un viaje.\n");
-    printf("2. Mostrar lineas de buses por parada.\n");
-    printf("3. Mostrar paradas de una linea de buses.\n");
-    printf("4. Mostrar horarios de una linea de buses.\n");
-    printf("5. Mostrar horarios de una parada.\n");
-    printf("6. Salir.\n");
-    printf("------------------------------------------\n");
-    printf("Ingrese una opcion:\n");
+int menuPrincipal(){
+    int opcion = 0;
+    do {
+        printf("---------------------MENU-----------------\n");
+        printf("------------------------------------------\n");
+        printf("1. Planificar un viaje.\n");
+        printf("2. Mostrar lineas de buses por parada.\n");
+        printf("3. Mostrar paradas de una linea de buses.\n");
+        printf("4. Mostrar horarios de una linea de buses.\n");
+        printf("5. Mostrar horarios de una parada.\n");
+        printf("6. Salir.\n");
+        printf("------------------------------------------\n");
+        printf("Ingrese una opcion:\n");
+        scanf("%d", &opcion);
+        getchar();
+    } while (opcion < 1 || opcion > 6);
+    return opcion;
 }
 
 int main()
 {
     /* Se definen las variables globales */
-    char op;
+    int op;
     Map* lineas = createMap(stringHash, stringEqual);
     Map* paradas = createMap(stringHash, stringEqual);
 
@@ -132,58 +137,56 @@ int main()
 
     /* Se muestra el menu principal */
     printf("Bienvenido a Busapp!\n");
-    printmenu();
-    op = nextchar();
-
     /* Ciclo principal de la aplicacion */
-    while(op != '6')
-    {
+    while(1){
         char* input_1[MAX_CARACTERES];
         char* input_2[MAX_CARACTERES];
         Linea* linea;
 
         /* Se ejecuta la opcion ingresada */
-        switch(op)
-        {
-            case '1':
-                scanf("%c", &op);
+        switch(menuPrincipal()){
+            case 1:
                 printf("Ingrese lugar de partida:\n");
-                scanf("%s", &input_1);
-
-                scanf("%c", &op);
+                fgets(input_1, MAX_CARACTERES - 1, stdin);
+                input_1[strlen(input_1) - 1] = '\0';
+                printf("%s", input_1);
                 printf("Ingrese lugar de destino:\n");
-                scanf("%s", &input_2);
+                fgets(input_2, MAX_CARACTERES - 1, stdin);
+                input_2[strlen(input_2)-1] = '\0';
 
                 planificar(input_1, input_2, lineas, paradas);
                 break;
-            case '2':
+            case 2:
                 scanf("%c", &op);
                 printf("Ingrese nombre de la parada:\n");
                 scanf("%s", &input_1);
 
                 mostrarLineas(input_1, paradas);
                 break;
-            case '3':
+            case 3:
                 scanf("%c", &op);
                 printf("Ingrese el numero de la linea:\n");
                 scanf("%s", &input_1);
                 mostrarParadas(input_1, lineas);
                 break;
-            case '4':
+            case 4:
                 scanf("%c", &op);
                 printf("Ingrese el numero de la linea:\n");
                 scanf("%s", &input_1);
 
                 mostrarHorariosLinea(input_1, lineas);
                 break;
-            case '5':
+            case 5:
                 scanf("%c", &op);
                 printf("Ingrese nombre de la parada:\n");
                 scanf("%s", &input_1);
 
                 mostrarHorariosParada(input_1, paradas);
                 break;
-            case '7':
+            case 6:
+                return;
+                break;
+            case 7:
                 linea = (Linea*) firstMap(lineas);
                 while(linea)
                 {
@@ -194,8 +197,6 @@ int main()
             default:
                 printf("Opcion Incorrecta.\n");
         }
-        printmenu();
-        op = nextchar();
     }
     return 0;
 }
@@ -288,7 +289,7 @@ void planificar(char* origen, char* destino, Map* lineas, Map* paradas)
         {
             ori = searchMap(paradas , origen);
             dest = searchMap(paradas, destino);
-            List *aux = list_create_empty();
+            list *aux = list_create_empty();
 
             list_first(ori->lineas);
             while(list_next(ori->lineas) != NULL )
@@ -298,14 +299,21 @@ void planificar(char* origen, char* destino, Map* lineas, Map* paradas)
                 {
                     if(ori->lineas == dest->lineas)
                     {
-                        aux = list_push_back(ori->lineas);
+                        list_push_back(aux, ori->lineas);
+                        printf("%p", aux);
                         break;
                     }
                 }
             }
-        }else return;
+        }else{
+            printf("Parada destino no encontrada\n");
+            return;
+        }
 
-    }else return;
+    }else{
+        printf("Parada origen no encontrada\n");
+        return;
+    }
 }
 
 void mostrarLineas(char* inputParada, Map* paradas)
