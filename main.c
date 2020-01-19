@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <math.h>
 #include "list.h"
 #include "Map.h"
 
@@ -280,7 +281,31 @@ void printTiempo(float unixT)
 
 void planificar(char* origen, char* destino, Map* lineas, Map* paradas)
 {
+    Parada *ori , *dest;
+    if(searchMap(paradas, origen) != NULL)
+    {
+        if(searchMap(paradas, destino) != NULL)
+        {
+            ori = searchMap(paradas , origen);
+            dest = searchMap(paradas, destino);
+            List *aux = list_create_empty();
 
+            list_first(ori->lineas);
+            while(list_next(ori->lineas) != NULL )
+            {
+                list_first(dest->lineas);
+                while(list_next(dest->lineas) != NULL)
+                {
+                    if(ori->lineas == dest->lineas)
+                    {
+                        aux = list_push_back(ori->lineas);
+                        break;
+                    }
+                }
+            }
+        }else return;
+
+    }else return;
 }
 
 void mostrarLineas(char* inputParada, Map* paradas)
